@@ -25,6 +25,11 @@ function claudePreToolUse(fields: Record<string, unknown>): string {
   return JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', ...fields } })
 }
 
+/** Whether any plugin listens to agent tool calls; otherwise every hook reply is a plain 204. */
+export function agentToolPluginHooksWanted(): boolean {
+  return pluginHookWanted('agent.tool.before') || pluginHookWanted('agent.tool.after')
+}
+
 /**
  * Runs `agent.tool.before`/`.after` for one hook post. Returns Claude Code's PreToolUse answer
  * when the script asked for one (`deny`, or changed input that still goes through the person's
@@ -36,10 +41,10 @@ export async function answerAgentToolPluginHooks(
   headers: IncomingHttpHeaders,
   owner: AgentToolCallOwner
 ): Promise<string | null> {
-  const wantsBefore = pluginHookWanted('agent.tool.before')
-  if (!wantsBefore && !pluginHookWanted('agent.tool.after')) {
+  if (!agentToolPluginHooksWanted()) {
     return null
   }
+  const wantsBefore = pluginHookWanted('agent.tool.before')
   const call = readAgentToolCall(source, body, owner)
   if (!call) {
     return null
@@ -96,7 +101,7 @@ export async function respondAfterAgentToolPluginHooks(
   owner: AgentToolCallOwner | null
 ): Promise<void> {
   // The usual case: no plugin listens, so answer at once without reading the call.
-  if (!owner || (!pluginHookWanted('agent.tool.before') && !pluginHookWanted('agent.tool.after'))) {
+  if (!owner || !agentToolPluginHooksWanted()) {
     res.writeHead(204)
     res.end()
     return

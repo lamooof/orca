@@ -22,6 +22,10 @@ import { CLAUDE_AGENT_VIEW_PATH } from '../../../shared/agent-hook-listener/prov
 
 import type { HookServerStartOptions, NormalizedLocalHook } from './server-types'
 import { withPrefetchedRolloutReads } from '../../../shared/agent-hook-listener/providers/codex/codex-rollout-prefetch-scope'
+import { agentToolPluginHooksWanted } from '../tool-events/agent-tool-plugin-hooks'
+
+// Well under the Codex hook client's 1.5 s timeout; most uncontended rollout reads finish first.
+const CODEX_HOOK_REPLY_WAIT_MS = 250
 
 export abstract class AgentHookServerLifecycle extends AgentHookServerStatusHookLifecycle {
   private readonly startup = new AgentHookStartup()
@@ -138,15 +142,35 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerStatusHook
         }
         await this.checkHookOwner(source, aliasedBody)
         // Why: rollout reads stay off the main thread; a slow open on Windows froze the window (#43539).
-        const prefetch =
+        // Why: without a plugin a Codex reply is always 204, so a hook stuck on Defender-scanned opens
+        // answers within the wait instead of hitting the agent's timeout; its status still applies in order.
+        // Only a pane with nothing else pending may answer early, so a pane that falls behind waits again.
+        const mayReplyEarly =
+          source === 'codex' &&
+          !this.codexRolloutPrefetcher.busy(aliasedBody) &&
+          !agentToolPluginHooksWanted()
+        // Calling prefetch claims this pane's turn synchronously, so hooks keep their order.
+        const prefetching =
           source === 'codex'
-            ? await this.codexRolloutPrefetcher.prefetch(this.state, aliasedBody)
+            ? this.codexRolloutPrefetcher.prefetch(this.state, aliasedBody)
             : undefined
+        let repliedEarly = false
+        const earlyReply = mayReplyEarly
+          ? setTimeout(() => {
+              repliedEarly = true
+              res.writeHead(204)
+              res.end()
+            }, CODEX_HOOK_REPLY_WAIT_MS)
+          : undefined
+        const prefetch = await prefetching
+        clearTimeout(earlyReply)
         let toolCallOwner: NormalizedLocalHook['event'] = null
         try {
           if (!isStatusCurrent()) {
-            res.writeHead(204)
-            res.end()
+            if (!repliedEarly) {
+              res.writeHead(204)
+              res.end()
+            }
             return
           }
           toolCallOwner = withPrefetchedRolloutReads(prefetch?.reads, () =>
@@ -155,8 +179,14 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerStatusHook
         } finally {
           prefetch?.release()
         }
-        await this.respondToHook(req, res, source, aliasedBody, toolCallOwner)
+        if (!repliedEarly) {
+          await this.respondToHook(req, res, source, aliasedBody, toolCallOwner)
+        }
       } catch (error) {
+        if (res.headersSent) {
+          console.error('[agent-hooks] hook ingest failed after reply', error)
+          return
+        }
         if (pathname === OPENCODE_STARTUP_PROMPT_CLAIM_PATH) {
           if (isHookRequestTruncatedError(error) && !destroyedBySlowlorisCap) {
             res.writeHead(503)

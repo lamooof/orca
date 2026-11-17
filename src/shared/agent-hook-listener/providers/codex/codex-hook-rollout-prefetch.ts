@@ -127,6 +127,11 @@ export async function prefetchCodexHookRolloutReadsWithin(
 export class CodexHookRolloutPrefetcher {
   private readonly tails = new Map<string, Promise<void>>()
 
+  /** Whether an earlier hook from this pane is still being prefetched or applied. */
+  busy(body: unknown): boolean {
+    return this.tails.has(hookPaneKey(body) ?? '')
+  }
+
   /** Call `release` once the hook is normalized and applied. */
   async prefetch(
     state: HookListenerState,
