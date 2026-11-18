@@ -51,6 +51,7 @@ type NewWorkspaceComposerProjectSectionProps = Pick<
   handleAddRemoteServer: () => void
   handleConnectRunTargetHost: (option: NeedsSetupProjectHostOption) => Promise<void>
   handleSetLocation: (option: NeedsSetupProjectHostOption) => void
+  onCreateProjectOnHost?: (option: NeedsSetupProjectHostOption) => void
   sshStatusLabel: string
   connectButtonLabel: string
   selectedProjectName: string
@@ -83,6 +84,7 @@ export function NewWorkspaceComposerProjectSection({
   handleAddRemoteServer,
   handleConnectRunTargetHost,
   handleSetLocation,
+  onCreateProjectOnHost,
   ephemeralVmRecipeError,
   selectedRepoRequiresConnection,
   selectedRepoConnectionId,
@@ -225,6 +227,7 @@ export function NewWorkspaceComposerProjectSection({
               onAddRemoteServer={handleAddRemoteServer}
               onConnectHost={handleConnectRunTargetHost}
               onSetLocation={handleSetLocation}
+              onCreateProject={onCreateProjectOnHost}
             />
             {ephemeralVmRecipeError ? (
               <p className="whitespace-pre-line text-[11px] text-destructive">

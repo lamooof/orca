@@ -73,7 +73,8 @@ const hosts: ProjectHostSetupOption[] = [
     detail: 'Project location not set',
     isAvailable: true,
     attention: false,
-    canSetLocation: true
+    canSetLocation: true,
+    canCreateProject: false
   }
 ]
 

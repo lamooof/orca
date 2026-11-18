@@ -5,7 +5,12 @@ import type {
 } from '@/lib/workspace/creation/project-host-setup-options'
 import { HostRowIcon } from '../../host-picker/host-row-icon'
 import { RunTargetRow } from './RunTargetComboboxRow'
-import { ConnectHostButton, NeedsSetupHostIcon, SetLocationButton } from './RunTargetRowActions'
+import {
+  ConnectHostButton,
+  CreateProjectButton,
+  NeedsSetupHostIcon,
+  SetLocationButton
+} from './RunTargetRowActions'
 import { RecipesSubmenuRow } from './RunTargetSubmenus'
 import type { EphemeralVmRecipeOption, RunTargetRowModel } from './run-target-options'
 
@@ -21,12 +26,14 @@ export default function RunTargetRowList({
   connectingHostIds,
   canConnect,
   canSetLocation,
+  canCreateProject,
   onArm,
   onRecipesOpenChange,
   onSelectHost,
   onSelectRecipe,
   onConnectHost,
-  onSetLocation
+  onSetLocation,
+  onCreateProject
 }: {
   rows: readonly RunTargetRowModel[]
   armedKey: string | null
@@ -39,6 +46,7 @@ export default function RunTargetRowList({
   connectingHostIds: ReadonlySet<string>
   canConnect: boolean
   canSetLocation: boolean
+  canCreateProject: boolean
   /** Arms a row and opens the submenu that row owns, if any. */
   onArm: (key: string, submenu: 'recipes' | null) => void
   onRecipesOpenChange: (open: boolean) => void
@@ -46,6 +54,7 @@ export default function RunTargetRowList({
   onSelectRecipe: (recipeId: string) => void
   onConnectHost: (option: NeedsSetupProjectHostOption) => void
   onSetLocation: (option: NeedsSetupProjectHostOption) => void
+  onCreateProject: (option: NeedsSetupProjectHostOption) => void
 }): React.JSX.Element {
   return (
     <>
@@ -74,6 +83,7 @@ export default function RunTargetRowList({
           const connecting = connectingHostIds.has(row.option.hostId)
           const hasConnect = Boolean(row.option.connectAction && canConnect)
           const hasSetLocation = Boolean(row.option.canSetLocation && canSetLocation)
+          const hasCreate = Boolean(row.option.canCreateProject && canCreateProject)
           return (
             <RunTargetRow
               key={row.key}
@@ -85,14 +95,14 @@ export default function RunTargetRowList({
                 />
               }
               label={row.option.label}
-              // Inline Connect/Set location already provides the next step; omit duplicate detail text.
+              // Inline actions already provide the next step; omit duplicate detail text.
               detail={hasConnect || hasSetLocation ? '' : row.option.detail}
               armed={isArmed}
               current={false}
               dimmed
               optionId={optionId}
               onArm={() => onArm(row.key, null)}
-              onCommit={() => onSetLocation(row.option)}
+              onCommit={() => (hasCreate ? onCreateProject(row.option) : onSetLocation(row.option))}
               trailing={
                 hasConnect ? (
                   <ConnectHostButton
@@ -103,6 +113,11 @@ export default function RunTargetRowList({
                   <SetLocationButton
                     hostLabel={row.option.label}
                     onSetLocation={() => onSetLocation(row.option)}
+                  />
+                ) : hasCreate ? (
+                  <CreateProjectButton
+                    hostLabel={row.option.label}
+                    onCreateProject={() => onCreateProject(row.option)}
                   />
                 ) : undefined
               }

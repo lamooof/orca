@@ -1,4 +1,8 @@
 import type { ExecutionHostHealth } from '../../../../../shared/execution-host/execution-host-health'
+import {
+  parseExecutionHostId,
+  type ExecutionHostId
+} from '../../../../../shared/execution-host/execution-host'
 
 /** Why a host cannot take a project setup right now, from its health; null when health allows it. */
 export function getHostHealthUnavailableDetail(health: ExecutionHostHealth): string | null {
@@ -20,4 +24,10 @@ export function getHostHealthUnavailableDetail(health: ExecutionHostHealth): str
     case 'local':
       return null
   }
+}
+
+/** Create-project runs locally or through a paired server; raw SSH targets have no create flow. */
+export function canCreateProjectOnHost(hostId: ExecutionHostId): boolean {
+  const parsed = parseExecutionHostId(hostId)
+  return parsed?.kind === 'local' || parsed?.kind === 'runtime'
 }

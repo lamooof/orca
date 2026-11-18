@@ -6,7 +6,10 @@ import {
   type ExecutionHostId
 } from '../../../../../shared/execution-host/execution-host'
 import type { ExecutionHostRegistryEntry } from '../../../../../shared/execution-host/execution-host-registry-entry'
-import { getHostHealthUnavailableDetail } from './project-host-health-detail'
+import {
+  canCreateProjectOnHost,
+  getHostHealthUnavailableDetail
+} from './project-host-health-detail'
 import { isHostLocalProjectId } from '../../../../../shared/project/host-setup/project-host-setup-projection'
 import { isEphemeralVmRuntimeEnvironment } from '../../../../../shared/remote-runtime/host-catalog/runtime-environments'
 import { isMergedAwayExecutionHost } from '../../../../../shared/execution-host/managed-orcad-execution-host'
@@ -52,6 +55,8 @@ export type ProjectHostSetupOption =
       attention: boolean
       // Available pathless hosts can set up in place; connecting/in-progress/unsupported hosts need another step.
       canSetLocation: boolean
+      // Host-local projects cannot share identity across hosts, so the user can create a separate project there.
+      canCreateProject: boolean
       connectAction?: { kind: 'ssh'; targetId: string } | { kind: 'runtime'; environmentId: string }
     }
 
@@ -177,6 +182,7 @@ function buildNeedsSetupOptions({
   readySetupByHost,
   pendingSetupByHost
 }: BuildNeedsSetupOptionsInput): NeedsSetupProjectHostOption[] {
+  const isHostLocal = isHostLocalProjectId(projectId)
   return hosts
     .filter(
       (host) =>
@@ -194,23 +200,26 @@ function buildNeedsSetupOptions({
         getHostHealthUnavailableDetail(host.health) ?? getHostSetupUnavailableDetail(host)
       const isAvailable = unavailableDetail === null
       const connectAction = getHostConnectAction(host)
+      const setupDetail = pendingSetup
+        ? getPendingSetupDetail(pendingSetup)
+        : isHostLocal
+          ? translate(
+              'auto.lib.projectHostSetupOptions.hostLocalProject',
+              'This project has no Git remote'
+            )
+          : translate('auto.lib.projectHostSetupOptions.locationNotSet', 'Project location not set')
       return {
         id: `needs-setup:${host.id}`,
         kind: 'needs-setup' as const,
         projectId,
         hostId: host.id,
         label: host.label ? translateHostDisplayLabel(host) : getExecutionHostLabel(host.id),
-        detail:
-          unavailableDetail ??
-          (pendingSetup
-            ? getPendingSetupDetail(pendingSetup)
-            : translate(
-                'auto.lib.projectHostSetupOptions.locationNotSet',
-                'Project location not set'
-              )),
+        detail: unavailableDetail ?? setupDetail,
         isAvailable,
         attention: host.health === 'error',
         canSetLocation: canSetProjectLocation(projectId, isAvailable, pendingSetup),
+        canCreateProject:
+          isAvailable && isHostLocal && !pendingSetup && canCreateProjectOnHost(host.id),
         ...(connectAction ? { connectAction } : {})
       }
     })

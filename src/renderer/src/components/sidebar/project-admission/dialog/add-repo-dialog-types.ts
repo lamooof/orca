@@ -10,6 +10,8 @@ export type AddRepoDialogEntryRequest =
       id: number
       kind: 'clone' | 'create' | 'browse-runtime'
       hostId: ExecutionHostId | null
+      /** Prefills the Create new project name when Run on opens this request. */
+      createName?: string
     }
   | {
       id: number
@@ -41,4 +43,10 @@ export function defaultProjectGroupNameForPath(path: string): string {
 
 export function createNestedRepoScanId(): string {
   return `nested-repo-scan-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+let nextEntryRequestId = 1
+
+export function allocateAddRepoEntryRequestId(): number {
+  return nextEntryRequestId++
 }

@@ -108,3 +108,46 @@ export function SetLocationButton({
     </Tooltip>
   )
 }
+
+export function CreateProjectButton({
+  hostLabel,
+  onCreateProject
+}: {
+  hostLabel: string
+  onCreateProject: () => void
+}): React.JSX.Element {
+  const t = useTranslate()
+  const label = t('auto.components.NewWorkspaceComposerCard.createProject', 'Create project')
+  const description = t(
+    'auto.components.NewWorkspaceComposerCard.createProjectOnHost',
+    'Create a new project on {{host}}.',
+    { host: hostLabel }
+  )
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          className="ml-auto shrink-0 self-center"
+          aria-label={description}
+          onMouseDown={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          }}
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onCreateProject()
+          }}
+        >
+          {label}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6}>
+        {description}
+      </TooltipContent>
+    </Tooltip>
+  )
+}

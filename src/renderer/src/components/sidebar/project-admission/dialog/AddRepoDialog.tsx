@@ -24,6 +24,7 @@ import {
   useAddRepoEntryStepState,
   useApplyEntryWindowsDriveRefusal
 } from './use-add-repo-entry-request-state'
+import { useEntryRequestCreateName } from './use-entry-request-create-name'
 import { useAddRepoWindowsDriveRefusal } from '../host-selection/use-add-repo-windows-drive-refusal'
 import { useAddRepoWslHostOffer } from '../host-selection/use-add-repo-wsl-host-offer'
 
@@ -130,6 +131,7 @@ export default React.memo(function AddRepoDialog({ hosted }: AddRepoDialogProps)
       onWindowsDriveRefusal: (refusal) => windowsDrive.showRefusal(refusal, 'create')
     }
   )
+  useEntryRequestCreateName(isOpen, modalPaths.entryRequest, setCreateName)
 
   const {
     createDefaultParent,

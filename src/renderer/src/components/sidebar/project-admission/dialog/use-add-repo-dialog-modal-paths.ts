@@ -28,7 +28,14 @@ function readModalEntryRequest(value: unknown): AddRepoDialogEntryRequest | null
     (record.kind === 'clone' || record.kind === 'create' || record.kind === 'browse-runtime') &&
     (record.hostId === null || isExecutionHostId(record.hostId))
   ) {
-    return { id: record.id, kind: record.kind, hostId: record.hostId }
+    return {
+      id: record.id,
+      kind: record.kind,
+      hostId: record.hostId,
+      ...(record.kind === 'create' && typeof record.createName === 'string'
+        ? { createName: record.createName }
+        : {})
+    }
   }
   if (!isExecutionHostId(record.hostId)) {
     return null

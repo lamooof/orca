@@ -2595,7 +2595,8 @@
         "noSavedConversation": "This chat has no saved conversation to copy."
       },
       "projectHostSetupOptions": {
-        "locationNotSet": "Project location not set"
+        "locationNotSet": "Project location not set",
+        "hostLocalProject": "This project has no Git remote"
       },
       "updateCheckClickOptions": {
         "releaseHint": "{{rcKey}}+click checks the latest RC; {{perfKey}}+click checks the latest perf build.",
@@ -3373,6 +3374,8 @@
         "setLocation": "Set project location",
         "setLocationOnHost": "Set project location on {{host}}",
         "setLocationTooltip": "Choose a folder or clone this project onto {{host}}.",
+        "createProject": "Create project",
+        "createProjectOnHost": "Create a new project on {{host}}.",
         "addHost": "Add host",
         "addSshHost": "Add SSH host",
         "addSshHostHint": "Use an existing machine over SSH",

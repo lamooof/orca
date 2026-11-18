@@ -35,6 +35,7 @@ type RunTargetComboboxProps = {
   onAddSshHost?: () => void
   onConnectHost?: (option: NeedsSetupProjectHostOption) => Promise<void> | void
   onSetLocation?: (option: NeedsSetupProjectHostOption) => void
+  onCreateProject?: (option: NeedsSetupProjectHostOption) => void
 }
 
 const ROOT_ATTRIBUTE = 'data-run-target-combobox-root'
@@ -51,7 +52,8 @@ export default function RunTargetCombobox({
   onAddRemoteServer,
   onAddSshHost,
   onConnectHost,
-  onSetLocation
+  onSetLocation,
+  onCreateProject
 }: RunTargetComboboxProps): React.JSX.Element {
   const t = useTranslate()
   const [submenu, setSubmenu] = useState<'recipes' | 'add-host' | null>(null)
@@ -145,6 +147,17 @@ export default function RunTargetCombobox({
     [close, onSetLocation]
   )
 
+  const createProject = useCallback(
+    (option: NeedsSetupProjectHostOption): void => {
+      if (!option.canCreateProject || !onCreateProject) {
+        return
+      }
+      close()
+      onCreateProject(option)
+    },
+    [close, onCreateProject]
+  )
+
   const activate = useCallback(
     (key: string | null): void => {
       const row = rows.find((candidate) => candidate.key === key)
@@ -156,12 +169,16 @@ export default function RunTargetCombobox({
         return
       }
       if (row.kind === 'needs-setup') {
+        if (row.option.canCreateProject && onCreateProject) {
+          createProject(row.option)
+          return
+        }
         setLocation(row.option)
         return
       }
       setSubmenu(row.kind === 'recipes' ? 'recipes' : 'add-host')
     },
-    [rows, selectHost, setLocation]
+    [createProject, onCreateProject, rows, selectHost, setLocation]
   )
 
   const handleKeyDown = useCallback(
@@ -282,6 +299,7 @@ export default function RunTargetCombobox({
               connectingHostIds={connectingHostIds}
               canConnect={Boolean(onConnectHost)}
               canSetLocation={Boolean(onSetLocation)}
+              canCreateProject={Boolean(onCreateProject)}
               onArm={(key, nextSubmenu) => {
                 arm(key)
                 setSubmenu(nextSubmenu)
@@ -291,6 +309,7 @@ export default function RunTargetCombobox({
               onSelectRecipe={selectRecipe}
               onConnectHost={(option) => void connectHost(option)}
               onSetLocation={setLocation}
+              onCreateProject={createProject}
             />
           </div>
           <HostListOverflowNote hiddenCount={hiddenHostCount} />

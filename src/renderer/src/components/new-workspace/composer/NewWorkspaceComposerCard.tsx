@@ -23,7 +23,10 @@ import {
   filterEnabledTuiAgents
 } from '../../../../../shared/agent-launch/catalog/tui-agent-selection'
 import type { RuntimeStatus } from '../../../../../shared/remote-runtime/session-graph/runtime-session-contracts'
-import type { AddRepoDialogEntryRequest } from '@/components/sidebar/project-admission/dialog/add-repo-dialog-types'
+import {
+  allocateAddRepoEntryRequestId,
+  type AddRepoDialogEntryRequest
+} from '@/components/sidebar/project-admission/dialog/add-repo-dialog-types'
 import type { TuiAgent } from '../../../../../shared/agent-launch/catalog/tui-agent'
 import { NewWorkspaceComposerAdvancedSection } from './NewWorkspaceComposerAdvancedSection'
 import { NewWorkspaceComposerAgentSection } from './NewWorkspaceComposerAgentSection'
@@ -223,6 +226,17 @@ export default function NewWorkspaceComposerCard(
     },
     [onNestedDialogOpenChange]
   )
+  const handleCreateProjectOnHost = React.useCallback(
+    (option: NeedsSetupProjectHostOption): void => {
+      handleAddProjectEntryRequest({
+        id: allocateAddRepoEntryRequestId(),
+        kind: 'create',
+        hostId: option.hostId,
+        createName: selectedProjectName
+      })
+    },
+    [handleAddProjectEntryRequest, selectedProjectName]
+  )
   const handleSetLocationClose = React.useCallback((): void => {
     setSetLocationOption(null)
     onNestedDialogOpenChange?.(false)
@@ -329,6 +343,7 @@ export default function NewWorkspaceComposerCard(
           handleAddRemoteServer={() => handleRemoteHostModeChange('server')}
           handleConnectRunTargetHost={handleConnectRunTargetHost}
           handleSetLocation={handleSetLocation}
+          onCreateProjectOnHost={selectedRepoIsGit ? handleCreateProjectOnHost : undefined}
           sshStatusLabel={sshStatusLabel}
           connectButtonLabel={connectButtonLabel}
           selectedProjectName={selectedProjectName}

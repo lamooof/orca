@@ -7,17 +7,12 @@ import {
   type ExecutionHostId
 } from '../../../../../../shared/execution-host/execution-host'
 import type { WslHostWindowsDriveRefusal } from '../../../../../../shared/remote-runtime/wsl-hosts/wsl-host-windows-drive-refusal'
-import type {
-  AddProjectMenuAction,
-  AddRepoDialogEntryRequest
+import {
+  allocateAddRepoEntryRequestId,
+  type AddProjectMenuAction,
+  type AddRepoDialogEntryRequest
 } from '../dialog/add-repo-dialog-types'
 import { pickWslHostFolder } from '../host-selection/add-repo-wsl-host-folder-picker'
-
-let nextEntryRequestId = 1
-
-function allocateEntryRequestId(): number {
-  return nextEntryRequestId++
-}
 
 export async function launchAddProjectMenuAction({
   action,
@@ -32,11 +27,11 @@ export async function launchAddProjectMenuAction({
     return
   }
   if (action === 'clone') {
-    onOpenEntryRequest({ id: allocateEntryRequestId(), kind: 'clone', hostId })
+    onOpenEntryRequest({ id: allocateAddRepoEntryRequestId(), kind: 'clone', hostId })
     return
   }
   if (action === 'create') {
-    onOpenEntryRequest({ id: allocateEntryRequestId(), kind: 'create', hostId })
+    onOpenEntryRequest({ id: allocateAddRepoEntryRequestId(), kind: 'create', hostId })
     return
   }
 
@@ -47,7 +42,7 @@ export async function launchAddProjectMenuAction({
       return
     }
     onOpenEntryRequest({
-      id: allocateEntryRequestId(),
+      id: allocateAddRepoEntryRequestId(),
       kind: 'picked-local-paths',
       paths,
       hostId: LOCAL_EXECUTION_HOST_ID
@@ -70,7 +65,7 @@ export async function launchAddProjectMenuAction({
       })
       if (windowsDriveRefusal) {
         onOpenEntryRequest({
-          id: allocateEntryRequestId(),
+          id: allocateAddRepoEntryRequestId(),
           kind: 'wsl-windows-drive-refusal',
           hostId,
           refusal: windowsDriveRefusal
@@ -81,7 +76,7 @@ export async function launchAddProjectMenuAction({
         return
       }
       onOpenEntryRequest({
-        id: allocateEntryRequestId(),
+        id: allocateAddRepoEntryRequestId(),
         kind: 'picked-wsl-host-path',
         hostId,
         path: linuxPath
@@ -89,6 +84,6 @@ export async function launchAddProjectMenuAction({
       return
     }
 
-    onOpenEntryRequest({ id: allocateEntryRequestId(), kind: 'browse-runtime', hostId })
+    onOpenEntryRequest({ id: allocateAddRepoEntryRequestId(), kind: 'browse-runtime', hostId })
   }
 }
